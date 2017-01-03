@@ -5,6 +5,7 @@ import javafx.beans.property.StringProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -65,7 +66,7 @@ public class SiteEvaluator extends Application {
   public void start(Stage stage) {
     Scene scene = new Scene(new Group());
     stage.setTitle("Site Evaluator");
-    stage.setWidth(960);
+    stage.setWidth(1040);
     stage.setHeight(610);
 
     final Label siteEvaluatorLabel = new Label("Evaluation results");
@@ -229,23 +230,10 @@ public class SiteEvaluator extends Application {
       };
     });
 
-    // bind data to the table
-    table.setItems(tableData);
-    table.getColumns().addAll(
-      siteURLCol,
-      alexaRankCol,
-      visibilityCol,
-      transferRateKbsCol,
-      speedCol,
-      navigabilityCol,
-      contentCol,
-      scoreCol
-    );
-
     // "add site" functionality
     final TextField addSiteURL = new TextField();
     addSiteURL.setPromptText("Site URL");
-    addSiteURL.setMinWidth(400);
+    addSiteURL.setMinWidth(486);
     addSiteURL.setMaxWidth(siteURLCol.getPrefWidth());
     final TextField addNavigability = new TextField();
     addNavigability.setMinWidth(135);
@@ -315,6 +303,61 @@ public class SiteEvaluator extends Application {
         maxSpeed = 0;
       }
     });
+
+    // delete site
+    TableColumn deleteCol = new TableColumn("");
+    deleteCol.setMinWidth(85);
+    deleteCol.setStyle( "-fx-alignment: CENTER;");
+    deleteCol.setCellValueFactory(
+      new PropertyValueFactory<>("DUMMY")
+    );
+    Callback<TableColumn<Website, String>, TableCell<Website, String>> cellFactory = //
+      new Callback<TableColumn<Website, String>, TableCell<Website, String>>() {
+        @Override
+        public TableCell call(final TableColumn<Website, String> param) {
+          final TableCell<Website, String> cell = new TableCell<Website, String>() {
+            final Button btn = new Button("Remove");
+            @Override
+            public void updateItem(String item, boolean empty) {
+              super.updateItem(item, empty);
+              if (empty) {
+                setGraphic(null);
+                setText(null);
+              } else {
+                btn.setStyle("-fx-font: 10 arial;");
+                btn.setOnAction((ActionEvent event) -> {
+                  btn.setDisable(true);
+                  Website website = getTableView().getItems().get(getIndex());
+                  addButton.setDisable(true);
+                  tableData.remove(getIndex());
+                  maxSpeed = 0;
+                  evaluateWebsites(tableData);
+                  addButton.setDisable(false);
+                  btn.setDisable(false);
+                });
+                setGraphic(btn);
+                setText(null);
+              }
+            }
+          };
+        return cell;
+        }
+      };
+    deleteCol.setCellFactory(cellFactory);
+
+    // bind data to the table
+    table.setItems(tableData);
+    table.getColumns().addAll(
+      siteURLCol,
+      alexaRankCol,
+      visibilityCol,
+      transferRateKbsCol,
+      speedCol,
+      navigabilityCol,
+      contentCol,
+      scoreCol,
+      deleteCol
+    );
 
     // Layout
     hb.getChildren().addAll(addSiteURL, addNavigability, addContent, addButton, clearButton);
